@@ -10,7 +10,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { getStorage, ref, getDownloadURL, uploadBytes } from "firebase/storage";
-import { getAuth } from "firebase/auth";
+import { getAuth, signOut } from "firebase/auth";
 import { app } from "../firebase";
 import "./ProfilePage.css";
 import { useParams, Link, useNavigate } from "react-router-dom";
@@ -20,6 +20,9 @@ import {
   FaShoppingBag,
   FaShoppingCart,
   FaVideo,
+  FaSignOutAlt,
+  FaHome,
+  FaHeart, // 🟢 ADDED: FaHeart icon for My Wishlist
 } from "react-icons/fa";
 
 const ProfilePage = () => {
@@ -27,6 +30,7 @@ const ProfilePage = () => {
   const [sellerData, setSellerData] = useState(null);
   const [reels, setReels] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768); 
 
   const db = getFirestore(app);
   const storage = getStorage(app);
@@ -59,7 +63,7 @@ const ProfilePage = () => {
     return { id: docSnap.id, ...data, imageUrl, reelUrl };
   };
 
-  // Fetch profile + reels
+  // Fetch profile + reels + Handle Resize
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -109,6 +113,11 @@ const ProfilePage = () => {
     };
 
     fetchData();
+
+    // 🟢 ADDED: Handle resize for responsiveness
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [db, storage, userId]);
 
   // Handle logo upload
@@ -134,10 +143,77 @@ const ProfilePage = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout Error:", error.message);
+    }
+  };
+
+  // 🟢 UPDATED: Sidebar Items Component - Aligned with DisplayPage/other pages
+  const SidebarItems = () => {
+    const user = auth.currentUser;
+    // NOTE: Hardcoded email check for "Be a Seller" is kept as per the original component structure (e.g., from DisplayPage.js)
+    const isSpecialSeller = user?.email === "mayank21047195@gmail.com"; 
+    
+    return (
+      <>
+        {/* Home */}
+        <div className="sidebar-item" onClick={() => navigate("/display")}>
+          <FaHome size={22} />
+          <span>Home</span>
+        </div>
+
+        {/* My Profile */}
+        <div className="sidebar-item" onClick={() => navigate("/profile")}>
+          <FaUser size={22} />
+          <span>My Profile</span>
+        </div>
+
+        {/* My Cart */}
+        <div className="sidebar-item" onClick={() => navigate("/cart")}>
+          <FaShoppingCart size={22} />
+          <span>My Cart</span>
+        </div>
+
+        {/* 🟢 NEW: My Wishlist */}
+        <div className="sidebar-item" onClick={() => navigate("/wishlist")}>
+          <FaHeart size={22} />
+          <span>My Wishlist</span>
+        </div>
+        
+        {/* Reels */}
+        <div className="sidebar-item" onClick={() => navigate("/reels")}>
+          <FaVideo size={22} />
+          <span>Reels</span>
+        </div>
+
+        {/* Be a Seller (Conditional) - Assuming this link should navigate to verification/upload flow */}
+        {isSpecialSeller && (
+            <div className="sidebar-item" onClick={() => navigate("/verifydetails")}> 
+              <FaStore size={22} />
+              <span>Be a Seller</span>
+            </div>
+        )}
+        
+        {/* Logout (Desktop - pushed to bottom) */}
+        {/* The condition for mobile logout button has been removed to match the requested component structure (like DisplayPage.js) 
+            However, we keep the desktop logout button pushed to the bottom. */}
+        
+        
+        {/* Logout (Mobile - placed last for mobile nav bar) */}
+      
+
+      </>
+    );
+  };
+
   if (loading) return <div className="loading">Loading profile...</div>;
   if (!sellerData) return <div className="error">Seller profile not found</div>;
 
-  // ✅ Only profile owner can upload logo
+  // Only profile owner can upload logo
   const isOwner =
     auth.currentUser && (userId ? auth.currentUser.uid === userId : true);
 
@@ -147,19 +223,13 @@ const ProfilePage = () => {
   const followingCount = sellerData.following || 0;
 
   return (
-    <div className="profile-page">
-      {/* Sidebar */}
-      <aside className="sidebar">
-        <nav>
-          <ul>
-            <li><FaUser /> <Link to="/profile">Profile</Link></li>
-            <li><FaStore /> <Link to="/be-a-seller">Be a Seller</Link></li>
-            <li><FaShoppingBag /> <Link to="/orders">My Orders</Link></li>
-            <li><FaShoppingCart /> <Link to="/cart">My Cart</Link></li>
-            <li><FaVideo /> <Link to="/reels">Reels</Link></li>
-          </ul>
-        </nav>
-      </aside>
+    <div className={`profile-page ${isMobile ? "mobile-view" : ""}`}>
+      {/* 🟢 Sidebar (Desktop) */}
+      {!isMobile && (
+        <aside className="sidebar">
+          <SidebarItems />
+        </aside>
+      )}
 
       {/* Main Profile */}
       <main className="profile-card-container">
@@ -232,6 +302,9 @@ const ProfilePage = () => {
           </div>
         </div>
       </main>
+
+      {/* 🟢 Mobile Sidebar (Bottom Navigation) */}
+      {isMobile && <nav className="mobile-sidebar"><SidebarItems /></nav>}
     </div>
   );
 };
