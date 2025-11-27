@@ -52,7 +52,7 @@ body {
   -ms-overflow-style: none;  /* Internet Explorer aur Edge ke liye */
   scrollbar-width: none;  /* Firefox ke liye */
 }
-/* Sidebar */
+/* Sidebar (Desktop) */
 .sidebar {
   position: fixed;
   background-color: #d3b896;
@@ -118,7 +118,7 @@ body {
   flex: 1;
   padding: 20px;
   width: 100vw;
-  padding-left: 270px;
+  padding-left: 270px; /* Space for desktop sidebar */
   background-color: #f4ece2;
   color: var(--text);
   margin-top: 0px;
@@ -325,6 +325,18 @@ height:300px;
 
 /* Mobile Sidebar & Behavior */
 @media (max-width: 1020px) {
+  /* Hides the desktop sidebar on mobile/tablet */
+  .sidebar {
+    display: none;
+  }
+
+  /* Main content takes full width and adds bottom padding */
+  .main-content {
+    padding-left: 20px;
+    padding-bottom: 80px; /* Must be larger than mobile-sidebar height */
+  }
+
+  /* Fixed Mobile Navigation Bar at the bottom */
   .mobile-sidebar {
     display: grid !important;
     grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
@@ -342,26 +354,33 @@ height:300px;
     background-color: #e6cebc;
   }
 
+  /* Mobile Sidebar Item Styling (icon on top, text below) */
   .mobile-sidebar .sidebar-item {
     display: flex;
     flex-direction: column;
     align-items: center;
     font-size: 0.65rem;
     color: var(--sidebar-text);
+    padding: 5px 0; /* Adjusted padding for better fit */
+    border-radius: 0; /* Remove hover background color/radius on mobile nav */
+    transition: none;
+    transform: none;
   }
 
+  /* Mobile Sidebar Icon Styling */
   .mobile-sidebar .sidebar-item svg {
     font-size: clamp(18px, 4vw, 22px);
     color: var(--sidebar-icon);
   }
-
-  .sidebar {
-    display: none;
+  
+  /* Remove hover effects on mobile sidebar items */
+  .mobile-sidebar .sidebar-item:hover {
+    background: none;
+    transform: none;
   }
 
-  .main-content {
-    padding-left: 20px;
-    padding-bottom: 80px;
+  .mobile-sidebar .sidebar-item:hover svg {
+    color: var(--sidebar-icon); /* Keep color consistent */
   }
 
   /* Hide scroll arrows on mobile */
