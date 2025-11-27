@@ -23,8 +23,9 @@ import {
   FaChevronRight,
   FaSearch,
   FaSignOutAlt,
-  FaUser, // 🟢 ADDED: FaUser icon for My Profile
+  FaUser, 
   FaClock,
+  FaHome, // 🟢 ADDED: FaHome icon for Home
 } from "react-icons/fa";
 import "./DisplayPage.css";
 
@@ -32,7 +33,12 @@ const categories = [
   "Men's Wear",
   "Women's Wear",
   "Kids Wear",
-  "Innovative Products",
+  "Home decor",
+  "Beauty",
+  "Sports",
+  "Books",
+  "Music",
+  "Auto accessories",
 ];
 
 const DisplayPage = () => {
@@ -183,18 +189,11 @@ const DisplayPage = () => {
     const user = auth.currentUser;
     return (
       <>
-        {/* 🟢 NEW: My Profile */}
+        {/* My Profile */}
         <div className="sidebar-item" onClick={() => navigate("/profile")}>
           <FaUser size={22} />
           <span>My Profile</span>
         </div>
-
-        {/* ❌ REMOVED: My Orders 
-        <div className="sidebar-item" onClick={() => navigate("/my-orders")}>
-          <FaShoppingBag size={22} />
-          <span>My Orders</span>
-        </div> 
-        */}
 
         <div className="sidebar-item" onClick={() => navigate("/cart")}>
           <FaShoppingCart size={22} />
@@ -210,29 +209,26 @@ const DisplayPage = () => {
           <FaVideo size={22} />
           <span>Reels</span>
         </div>
+        
+        {/* 🟢 NEW: Home Page Button (Navigate to DisplayPage.js, which is typically the root path '/') */}
+        <div className="sidebar-item" onClick={() => navigate("/")}>
+          <FaHome size={22} />
+          <span>Home</span>
+        </div>
 
         {user?.email === "mayank21047195@gmail.com" && (
           <div className="sidebar-item" onClick={handleBeSellerClick}>
             <FaStore size={22} />
-            <span>Be a Seller</span>
+            <span>Upload</span>
           </div>
         )}
-
-        <div
-          className="sidebar-item"
-          style={{ marginTop: "auto", cursor: "pointer" }}
-          onClick={handleLogout}
-        >
-          <FaSignOutAlt size={22} /> <span>Logout</span>
-        </div>
       </>
     );
   };
-
   return (
     <>
       <div className="page-container light">
-        {/* ✅ Referral Code + Wallet Display */}
+        {/* Referral Code + Wallet Display */}
         <div className="referral-code-box" style={{ textAlign: "center" }}>
           {referralCode && (
             <div>
@@ -242,7 +238,7 @@ const DisplayPage = () => {
             </div>
           )}
 
-          {/* ✅ Wallet amount with clock icon */}
+          {/* Wallet amount with clock icon */}
           <div
             style={{
               display: "flex",
@@ -278,7 +274,7 @@ const DisplayPage = () => {
           </nav>
         )}
 
-        {/* ✅ Main content */}
+        {/* Main content */}
         <main className="main-content">
           {isMobile && (
             <div className="mobile-logo">
@@ -291,7 +287,7 @@ const DisplayPage = () => {
             </div>
           )}
 
-          {/* ✅ Search Bar */}
+          {/* Search Bar */}
           <div className="search-bar-wrapper">
             <form onSubmit={handleSearch} className="search-form">
               <input
@@ -310,7 +306,7 @@ const DisplayPage = () => {
             </form>
           </div>
 
-          {/* ✅ Category-wise reels */}
+          {/* Category-wise reels */}
           {categories.map((category) => {
             const filtered = users.filter(
               (u) =>
