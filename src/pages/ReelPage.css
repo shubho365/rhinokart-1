@@ -1,3 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Sugo+Display&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Norwester&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
+
+/* Base Styles */
+body {
+  font-family: "Poppins", sans-serif;
+  margin: 0;
+}
+
 .reel-container {
   height: 100vh;
   overflow-y: scroll;
@@ -39,15 +49,19 @@
   transform: translate(-50%, -50%) scale(1.5);
 }
 
+/* ----------------------------------------------------------------- */
+/* Reel Actions (Icons on the right side) */
+/* ----------------------------------------------------------------- */
 .reel-actions {
   position: absolute;
-  right: 0%; /* video ke right se 10px gap */
-  top: 50%; /* starting point */
-  transform: translateY(-60%); /* thoda aur upar */
+  right: 15px; 
+  /* Default position for Desktop/Large Screens */
+  bottom: 250px; 
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px; /* icons ke beech ka gap */
+  gap: 15px; 
+  z-index: 60; /* Ensure actions are above the product list overlay */
 }
 .reel-actions button {
   background: none;
@@ -91,7 +105,86 @@
   color: white;
   text-align: center;
   max-width: 90%;
+  z-index: 55;
 }
+
+/* ----------------------------------------------------------------- */
+/* Product List Overlay Styles (Default for Desktop) */
+/* ----------------------------------------------------------------- */
+.reel-products-bottom-overlay {
+  /* This is the main container for Seller Name + Product List */
+  position: absolute;
+  /* Default Desktop/Large Screen Bottom (e.g., 20px) */
+  bottom: 10px; 
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  z-index: 50;
+  padding: 15px 15px 0 15px;
+  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+  color: white; 
+}
+
+/* Style for the horizontal product list scroll area */
+.reel-products-list {
+  display: flex;
+  overflow-x: scroll;
+  gap: 10px;
+  padding-bottom: 15px; 
+  width: 100%;
+  /* Hide scrollbar */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.reel-products-list::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Style for the individual product card inside the list */
+.reel-product-card {
+  flex-shrink: 0;
+  width: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  position: relative;
+  background: #fff;
+  text-align: center;
+}
+
+.reel-product-card img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+}
+.reel-product-card .price-details {
+    padding: 5px;
+    font-size: 12px;
+    line-height: 1.2;
+    color: #333;
+}
+.reel-product-card .price-details p {
+    margin: 0;
+}
+.reel-product-card .price-details .current-price {
+    font-weight: bold;
+    color: #e83e8c;
+}
+.reel-product-card .price-details .old-price {
+    font-size: 10px;
+    color: #999;
+    text-decoration: line-through;
+}
+.reel-product-card .price-details .discount {
+    font-size: 10px;
+    color: #4ade80;
+    font-weight: bold;
+}
+/* ----------------------------------------------------------------- */
 
 .product-details-bottom .product-name {
   font-size: 18px;
@@ -148,9 +241,10 @@
   height: 100%;
   width: 270px;
   background-color:#d3b896;/* light background */
-  color: rgb(255, 255, 255); /* dark text */
+  color: black; /* dark text */
   overflow-y: auto;
   padding-top: 20px;
+  z-index: 100;
 }
 .sidebar-bottom {
   padding: 10px;
@@ -173,49 +267,7 @@
  background: var(--sidebar-item-hover);
 }
 
-/* Hide sidebar entirely on mobile */
-/* Hide sidebar entirely on mobile */
-/* Mobile screen sidebar bottom fix */
-/* Mobile screen sidebar bottom fix */
-/* Mobile screen sidebar bottom fix */
-/* Mobile screen: bottom nav */
-@media (max-width: 1020px) {
-  .sidebar {
-    position: fixed !important;
-    bottom: 0 !important;
-    top: auto !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 70px !important;
-    background-color: #d3b896;
-    display: flex !important;
-    flex-direction: row !important;   /* items ek row me */
-    justify-content: space-around;
-    align-items: center;
-    z-index: 9999;
-    padding: 0;
-  }
-
-  .sidebar-item {
-    display: flex;
-    flex-direction: column;  /* ✅ icon upar, text neeche */
-    align-items: center;
-    justify-content: center;
-    flex: 1;                 /* equal space for all items */
-    color: white;
-    font-size: 12px;         /* text chhota */
-  }
-
-  .sidebar-item svg {
-    font-size: 22px;         /* icon size */
-    margin-bottom: 2px;      /* icon aur text ke beech gap */
-  }
-
-  .main-content {
-    margin-left: 0 !important;
-    margin: auto;     /* bottom bar ke liye jagah */
-  }
-}
+/* Comments Overlay Base Styles */
 .comments-overlay {
   position: fixed;
   bottom: 0;
@@ -326,6 +378,74 @@
 }
 
 
+/* Media Query for Mobile/Tablet Screens (<= 1020px) */
+@media (max-width: 1020px) {
+  /* Hides the desktop sidebar */
+  .sidebar {
+    position: fixed !important;
+    bottom: 0 !important;
+    top: auto !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 70px !important; /* Mobile Nav Height */
+    background-color: #d3b896;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 9999; /* Highest Z-index */
+    padding: 0;
+  }
+
+  /* Styling for items in the fixed bottom navigation */
+  .sidebar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    color: white;
+    font-size: 12px;
+  }
+
+  .sidebar-item svg {
+    font-size: 22px;
+    margin-bottom: 2px;
+  }
+
+  /* Main content doesn't need margin-left, but no change needed here as it's outside reel-container */
+
+  /* ✅ ADJUSTMENT 1: Product List Overlay sits 70px above the bottom mobile nav (70px high) */
+  .reel-products-bottom-overlay {
+    bottom: 70px; 
+    padding-bottom: 5px; /* Adjust padding to look cleaner above the nav */
+  }
+
+  /* ✅ ADJUSTMENT 2: Action Icons sit above the product overlay (approx 130px high) and the mobile nav (70px high) */
+  .reel-actions {
+    right: 5%; 
+    bottom: 200px; /* Safe distance above the product list overlay */
+  }
+  
+  /* ✅ ADJUSTMENT 3: Comments Overlay sits 70px above the mobile nav */
+  .comments-overlay{
+    margin-bottom:70px; /* Moves the overlay up by the height of the mobile nav */
+  }
+}
+
+/* Optional: Refinements for smaller mobile screens */
+@media(max-width: 768px) {
+  .comments-overlay{
+    /* Override margin-bottom to ensure it's 70px on all small screens */
+    margin-bottom:70px; 
+  }
+
+  .reel-actions {
+    right: 5%;
+    bottom: 200px; 
+  }
+}
+
 @media (min-width: 768px) {
   .comments-overlay {
     width: calc(100% - 200px); /* 200px wider than current card area */
@@ -333,20 +453,3 @@
     height:50%;
   }
 }
-
-@keyframes slideUp {
-  from { transform: translate(-50%, 100%); }
-  to { transform: translate(-50%, 0); }
-}
-
-
-@media(max-width: 768px) {
-  .reel-actions {
-    right: 10%;
-  }
-  .comments-overlay{
-    margin-bottom:75px;
-  }
-}
-
-
