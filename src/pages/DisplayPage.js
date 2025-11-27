@@ -23,7 +23,7 @@ import {
   FaChevronRight,
   FaSearch,
   FaSignOutAlt,
-  FaWallet,
+  FaUser, // 🟢 ADDED: FaUser icon for My Profile
   FaClock,
 } from "react-icons/fa";
 import "./DisplayPage.css";
@@ -183,12 +183,18 @@ const DisplayPage = () => {
     const user = auth.currentUser;
     return (
       <>
-       
+        {/* 🟢 NEW: My Profile */}
+        <div className="sidebar-item" onClick={() => navigate("/profile")}>
+          <FaUser size={22} />
+          <span>My Profile</span>
+        </div>
 
+        {/* ❌ REMOVED: My Orders 
         <div className="sidebar-item" onClick={() => navigate("/my-orders")}>
           <FaShoppingBag size={22} />
           <span>My Orders</span>
-        </div>
+        </div> 
+        */}
 
         <div className="sidebar-item" onClick={() => navigate("/cart")}>
           <FaShoppingCart size={22} />
