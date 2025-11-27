@@ -4,48 +4,105 @@
   min-height: 100vh;
   background-color: #f8f4ef;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding-bottom: 0; /* Default for desktop */
 }
 
-/* ---------- Sidebar ---------- */
+/* 🟢 Mobile View Adjustments */
+.profile-page.mobile-view {
+  padding-bottom: 70px; /* Space for the fixed bottom bar */
+}
+
+/* ---------- Sidebar (Desktop) ---------- */
 .sidebar {
   width: 240px;
   background-color: #d3b896;
   padding: 25px 20px;
   box-shadow: 2px 0 8px rgba(0,0,0,0.08);
   border-right: 1px solid rgba(0,0,0,0.05);
+  display: flex; /* To allow auto margin on Logout button */
+  flex-direction: column;
 }
 
-.sidebar nav ul {
+/* 🟢 Sidebar Item (Matches DisplayPage structure) */
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0; /* Slightly tighter spacing than before */
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #222;
+  padding: 8px 10px;
+  border-radius: 6px;
+  transition: all 0.25s ease;
+}
+
+.sidebar-item:hover {
+  background: #a6866e;
+  color: #fff;
+}
+.sidebar-item span {
+  /* Ensures text alignment is maintained */
+  flex-grow: 1; 
+}
+
+
+/* ---------- Mobile Sidebar (Bottom Navigation) 🟢 NEW & Unified ---------- */
+.mobile-sidebar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background-color: #d3b896;
+  border-top: 1px solid #ddd;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+  z-index: 1000;
+}
+
+.mobile-sidebar .sidebar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #333;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  margin: 0; /* Override desktop margins */
+  padding: 0; /* Override desktop padding */
+  background: none; /* Clear background */
+}
+
+.mobile-sidebar nav {
+  height: 100%;
+}
+.mobile-sidebar nav > * {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 100%;
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.sidebar nav ul li {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 18px 0;
-  font-size: 16px;
-  font-weight: 500;
+.mobile-sidebar .sidebar-item svg {
+  font-size: 20px;
+  margin-bottom: 2px;
 }
 
-.sidebar nav ul li a {
-  text-decoration: none;
-  color: #222;
-  transition: all 0.25s ease;
+.mobile-sidebar .sidebar-item:hover {
+  color: #6b4e37;
+  background: none;
+}
+.mobile-sidebar .sidebar-item span {
+  flex-grow: 0; /* Reset flex grow */
 }
 
-.sidebar nav ul li:hover a {
-  color: #fff;
-  background: #a6866e;
-  padding: 6px 10px;
-  border-radius: 6px;
-}
-
-.sidebar nav ul li:hover {
-  opacity: 0.95;
-}
 
 /* ---------- Profile Card Container ---------- */
 .profile-card-container {
@@ -54,9 +111,28 @@
   flex-direction: column;
   align-items: center;
   padding: 50px 20px;
+  max-width: 100%; /* Ensure it fits smaller screens */
+}
+/* 🟢 Mobile adjustment for padding */
+@media (max-width: 768px) {
+    .profile-card-container {
+        padding-top: 20px;
+    }
+    .profile-card {
+        width: 100%;
+        max-width: 400px;
+        padding: 20px 15px;
+    }
+    .reels-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+    .reel-thumbnail {
+        height: 150px;
+    }
 }
 
-/* ---------- Profile Card ---------- */
+
+/* ---------- Profile Card (Existing styles) ---------- */
 .profile-card {
   background: #fff;
   border-radius: 16px;
@@ -66,7 +142,6 @@
   box-shadow: 0 6px 18px rgba(0,0,0,0.08);
   animation: fadeIn 0.4s ease;
 }
-
 /* Logo/Profile Image */
 .profile-logo {
   width: 110px;
@@ -76,7 +151,6 @@
   border: 3px solid #d3b896;
   box-shadow: 0 3px 6px rgba(0,0,0,0.1);
 }
-
 /* Upload Button */
 .upload-logo-btn {
   display: inline-block;
@@ -89,12 +163,10 @@
   cursor: pointer;
   transition: all 0.25s ease;
 }
-
 .upload-logo-btn:hover {
   background: #8a6b54;
   transform: scale(1.03);
 }
-
 /* Brand Name */
 .brand-name {
   color: #555;
@@ -102,72 +174,7 @@
   margin-top: 8px;
   font-size: 15px;
 }
-
 /* Stats Section */
-.stats-row {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 18px;
-  font-size: 14px;
-}
-
-.stats-row strong {
-  display: block;
-  font-size: 18px;
-  color: #333;
-}
-
-/* ---------- Reels Grid ---------- */
-.reels-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
-  margin-top: 25px;
-  width: 100%;
-  max-width: 900px;
-}
-
-.reel-card {
-  position: relative;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  overflow: hidden;
-  border-radius: 12px;
-  background-color: #eee;
-}
-
-.reel-card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-}
-
-.reel-thumbnail {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  display: block;
-}
-
-/* Views Count Overlay */
-.reel-views {
-  position: absolute;
-  bottom: 6px;
-  right: 6px;
-  background: rgba(0,0,0,0.65);
-  color: #fff;
-  font-size: 12px;
-  padding: 3px 8px;
-  border-radius: 12px;
-  backdrop-filter: blur(2px);
-}
-
-/* No Reels Text */
-.no-reels {
-  margin-top: 20px;
-  color: #777;
-  font-size: 15px;
-  text-align: center;
-}
 .profile-stats {
   display: flex;
   justify-content: space-around;
@@ -186,7 +193,7 @@
   font-size: 14px;
   color: gray;
 }
-
+/* ---------- Reels Grid ---------- */
 .reels-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -197,14 +204,27 @@
   cursor: pointer;
   overflow: hidden;
   border-radius: 8px;
+  transition: all 0.25s ease;
+}
+.reel-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
 }
 .reel-card img {
   width: 100%;
   height: auto;
+  min-height: 120px;
+  object-fit: cover;
   display: block;
 }
-
-
+/* No Reels Text */
+.no-reels {
+  margin-top: 20px;
+  color: #777;
+  font-size: 15px;
+  text-align: center;
+  grid-column: 1 / -1; /* Center text across grid */
+}
 /* ---------- Animations ---------- */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(12px); }
