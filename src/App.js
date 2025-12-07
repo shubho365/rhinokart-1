@@ -101,8 +101,6 @@ function App() {
                 <Navigate to="/login" replace />
               ) : user?.email === "mayank21047195@gmail.com" ? (
                 <Navigate to="/upload" replace />
-              ) : !hasDetails ? (
-                <Navigate to="/details" replace />
               ) : (
                 <Navigate to="/display" replace />
               )
@@ -139,14 +137,14 @@ function App() {
             element={user ? <WishlistPage /> : <Navigate to="/login" replace />}
           />
 
-          {/* Upload (Admin Only) */}
+          {/* Upload - Available to all logged-in users */}
           <Route
             path="/upload"
             element={
-              user?.email === "mayank21047195@gmail.com" ? (
+              user ? (
                 <UploadPage />
               ) : (
-                <Navigate to="/display" replace />
+                <Navigate to="/login" replace />
               )
             }
           />
@@ -193,7 +191,7 @@ function App() {
             }
           />
 
-          {/* 🟢 NEW: Wallet Page Route */}
+          {/* NEW: Wallet Page Route */}
           <Route
             path="/wallet"
             element={user ? <WalletPage /> : <Navigate to="/login" replace />}

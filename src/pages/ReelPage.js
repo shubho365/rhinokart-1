@@ -1,5 +1,5 @@
 // src/pages/ReelPage.js
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 
 import {
   collection,
@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { useParams, useNavigate } from "react-router-dom";
+import { processInstagramEmbeds } from "../services/instagramService";
 import {
   FaSignOutAlt,
   FaShoppingCart,
@@ -32,8 +33,11 @@ import {
   FaTimes,
   FaUser, 
   FaHome, 
-  FaStore // 🟢 ADDED: FaStore for Be a Seller (if applicable)
-
+  FaStore,
+  FaVolumeUp,
+  FaVolumeMute,
+  FaPlay,
+  FaPause
 } from "react-icons/fa";
 import { signOut, getAuth } from "firebase/auth";
 import "./ReelPage.css";
@@ -146,10 +150,20 @@ const ReelsPage = () => {
   
   // 🟢 ADDED: State for mobile view detection
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1020); 
+  
+  // 🟢 ADDED: Mute state for video control
+  const [isMuted, setIsMuted] = useState(true);
+  
+  // 🟢 ADDED: Play state tracking for each video
+  const [playingStates, setPlayingStates] = useState({});
 
   const currentUser = auth.currentUser;
   const { id } = useParams();
   const navigate = useNavigate();
+  
+  // 🟢 MOVED: Video refs to component level with proper initialization
+  const videoRefs = useRef([]);
+  const containerRef = useRef(null);
   
 
   /* -------- Fetch seller name and reels and Handle Resize -------- */
@@ -276,6 +290,52 @@ const ReelsPage = () => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [currentUser, id]);
+
+  // 🟢 NEW: Effect to pause/play videos based on currentIndex
+  useEffect(() => {
+    videoRefs.current.forEach((video, index) => {
+      if (video) {
+        if (index === currentIndex) {
+          // Play the current video
+          video.play().catch(() => {
+            // Autoplay might be blocked, that's okay
+          });
+          setPlayingStates(prev => ({ ...prev, [index]: true }));
+        } else {
+          // Pause all other videos
+          video.pause();
+          video.currentTime = 0; // Reset to start
+          setPlayingStates(prev => ({ ...prev, [index]: false }));
+        }
+      }
+    });
+  }, [currentIndex]);
+
+  // 🟢 NEW: Effect to sync mute state across all videos
+  useEffect(() => {
+    videoRefs.current.forEach((video) => {
+      if (video) {
+        video.muted = isMuted;
+      }
+    });
+  }, [isMuted]);
+
+  /* 🟢 NEW: Process Instagram embeds after reels are loaded */
+  useEffect(() => {
+    // Add Instagram embed script if not already present
+    if (!window.instgrm && typeof window !== 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://www.instagram.com/embed.js';
+      script.async = true;
+      document.body.appendChild(script);
+      script.onload = () => {
+        processInstagramEmbeds();
+      };
+    } else if (window.instgrm) {
+      // If script already loaded, just process the embeds
+      processInstagramEmbeds();
+    }
+  }, [reels]);
 
   /* -------- Like -------- */
   const handleLogout = async () => {
@@ -527,21 +587,24 @@ const ReelsPage = () => {
     setShowShare(true);
   };
 
-
-
-  // For managing multiple video refs
-  const videoRefs = React.useRef([]);
-
-  const togglePlayPause = (videoIndex) => {
+  // 🟢 IMPROVED: Toggle Play/Pause with state tracking
+  const togglePlayPause = useCallback((videoIndex) => {
     const video = videoRefs.current[videoIndex];
     if (video) {
       if (video.paused) {
-        video.play();
+        video.play().catch(() => {});
+        setPlayingStates(prev => ({ ...prev, [videoIndex]: true }));
       } else {
         video.pause();
+        setPlayingStates(prev => ({ ...prev, [videoIndex]: false }));
       }
     }
-  };
+  }, []);
+
+  // 🟢 NEW: Toggle Mute function
+  const toggleMute = useCallback(() => {
+    setIsMuted(prev => !prev);
+  }, []);
 
   /* -------- Buy Now Redirect (KEEP THIS HANDLER, JUST DONT USE IT) -------- */
   // Keeping this function definition just in case, though it is no longer called in the UI.
@@ -615,10 +678,16 @@ const ReelsPage = () => {
   };
 
 
-  const handleScroll = (e) => {
-    const newIndex = Math.round(e.target.scrollTop / window.innerHeight);
-    setCurrentIndex(newIndex);
-  };
+  // 🟢 IMPROVED: Scroll handler with debouncing for better performance
+  const handleScroll = useCallback((e) => {
+    const scrollTop = e.target.scrollTop;
+    const viewHeight = window.innerHeight;
+    const newIndex = Math.round(scrollTop / viewHeight);
+    
+    if (newIndex !== currentIndex && newIndex >= 0 && newIndex < filteredReels.length) {
+      setCurrentIndex(newIndex);
+    }
+  }, [currentIndex, filteredReels.length]);
 
   if (loading) return <div className="loading">Loading reels...</div>;
 
@@ -662,13 +731,11 @@ const ReelsPage = () => {
           <span>Home</span>
         </div>
 
-        {/* Be a Seller (Conditional) */}
-        {isSpecialSeller && (
-            <div className="sidebar-item" onClick={handleBeSellerClick}> 
-              <FaStore size={22} />
-              <span>Be a Seller</span>
-            </div>
-        )}
+        {/* Upload Button - Visible to all logged in users */}
+        <div className="sidebar-item" onClick={() => navigate("/upload")}>
+          <FaStore size={22} />
+          <span>Upload</span>
+        </div>
       </>
     );
   };
@@ -687,7 +754,12 @@ const ReelsPage = () => {
       {/* Main Content */}
       {/* Note: The 'main-content' class should contain the scrollable reel-container */}
       <main className="main-content">
-        <div className="reel-container" onScroll={handleScroll}  hide-scrollbar style={{ position: "relative" }}>
+        <div 
+          ref={containerRef}
+          className="reel-container" 
+          onScroll={handleScroll}  
+          style={{ position: "relative" }}
+        >
 
           {/* ✅ Fixed Filter Bar */}
           <div
@@ -726,22 +798,105 @@ const ReelsPage = () => {
           {filteredReels.map((reel, index) => {
             // Get the outfits list
             const outfits = reel.outfits || [];
+            // Determine if this is a video or Instagram embed
+            const isInstagramReel = reel.uploadType === 'instagram' && reel.instagramEmbedConfig;
+            const reelUrl = reel.reelUrl;
 
             return (
               <div key={reel.reelId} className="reel">
-                <video
-                  ref={(el) => (videoRefs.current[index] = el)}
-                  src={reel.reelUrl}
-                  controls
-                  controlsList="nodownload noplaybackrate nofullscreen noremoteplayback"
-                  disablePictureInPicture
-                  autoPlay={index === currentIndex}
-                  muted
-                  loop
-                  className="reel-video"
-                  onClick={() => togglePlayPause(index)}
-                  onDoubleClick={() => handleLike(reel)}
-                />
+                {/* Video Display for regular reels */}
+                {!isInstagramReel && reelUrl && (
+                  <>
+                    <video
+                      ref={(el) => (videoRefs.current[index] = el)}
+                      src={reelUrl}
+                      playsInline
+                      webkit-playsinline="true"
+                      preload="metadata"
+                      muted={isMuted}
+                      loop
+                      className="reel-video"
+                      onClick={() => togglePlayPause(index)}
+                      onDoubleClick={() => handleLike(reel)}
+                    />
+                    
+                    {/* Custom Play/Pause Overlay Button */}
+                    <div
+                      className="video-control-overlay"
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        zIndex: 40,
+                        pointerEvents: 'none',
+                        opacity: playingStates[index] === false ? 1 : 0,
+                        transition: 'opacity 0.3s ease',
+                      }}
+                    >
+                      <FaPlay size={60} color="rgba(255,255,255,0.8)" />
+                    </div>
+                    
+                    {/* Mute/Unmute Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleMute();
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: '80px',
+                        right: '15px',
+                        zIndex: 70,
+                        background: 'rgba(0,0,0,0.5)',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '40px',
+                        height: '40px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {isMuted ? (
+                        <FaVolumeMute size={20} color="white" />
+                      ) : (
+                        <FaVolumeUp size={20} color="white" />
+                      )}
+                    </button>
+                  </>
+                )}
+
+                {/* Instagram Embed Display for Instagram reels */}
+                {isInstagramReel && (
+                  <div
+                    className="reel-instagram-embed"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: '#000',
+                      overflow: 'auto',
+                      position: 'relative',
+                    }}
+                    onDoubleClick={() => handleLike(reel)}
+                  >
+                    <div
+                      dangerouslySetInnerHTML={{ __html: reel.instagramEmbedConfig.embedHTML }}
+                      style={{
+                        width: '100%',
+                        maxHeight: '100%',
+                        overflowY: 'auto',
+                        display: 'flex',
+                        justifyContent: 'center',
+                      }}
+                      onLoad={() => processInstagramEmbeds()}
+                    />
+                  </div>
+                )}
 
                 {/* --- START: Bottom Overlay (Seller Name + Product List) --- */}
                 <div className="reel-products-bottom-overlay">

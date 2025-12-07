@@ -216,12 +216,11 @@ const DisplayPage = () => {
           <span>Home</span>
         </div>
 
-        {user?.email === "mayank21047195@gmail.com" && (
-          <div className="sidebar-item" onClick={handleBeSellerClick}>
-            <FaStore size={22} />
-            <span>Upload</span>
-          </div>
-        )}
+        {/* Upload Button - Visible to all logged in users */}
+        <div className="sidebar-item" onClick={() => navigate("/upload")}>
+          <FaStore size={22} />
+          <span>Upload</span>
+        </div>
       </>
     );
   };
@@ -312,7 +311,7 @@ const DisplayPage = () => {
               (u) =>
                 u.category === category &&
                 u.outfits?.length > 0 &&
-                u.reelUrl
+                (u.reelUrl || u.instagramEmbedConfig) // Support both video and Instagram reels
             );
 
             if (filtered.length === 0) return null;

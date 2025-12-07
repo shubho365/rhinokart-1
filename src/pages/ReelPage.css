@@ -32,7 +32,19 @@ body {
   width: auto;
   max-width: 100%;
   object-fit: cover;
+  cursor: pointer;
 }
+
+/* Video control overlay styles */
+.video-control-overlay {
+  pointer-events: none;
+}
+
+/* Mute button hover effect */
+.reel button:hover {
+  opacity: 0.8;
+}
+
 .center-fire-animation {
   position: absolute;
   top: 50%;

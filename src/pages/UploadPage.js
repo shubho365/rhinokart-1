@@ -12,18 +12,25 @@ import {
   Container,
   Paper,
   IconButton,
-  LinearProgress
+  LinearProgress,
+  Alert,
+  Tabs,
+  Tab
 } from '@mui/material';
 import { getFirestore, collection, doc, setDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
 import { auth, app } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { isValidInstagramInput, extractInstagramShortcode, getInstagramErrorMessage, createInstagramEmbedConfig } from '../services/instagramService';
 
 const UploadPage = () => {
   const [brandName, setBrandName] = useState('');
   const [contact, setContact] = useState('');
   const [reel, setReel] = useState(null);
+  const [instagramLink, setInstagramLink] = useState('');
+  const [instagramError, setInstagramError] = useState('');
+  const [uploadType, setUploadType] = useState('video'); // 'video' or 'instagram'
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -79,10 +86,27 @@ const UploadPage = () => {
 
   const handleUpload = async () => {
     // Basic Validation Check
-    if (!brandName || !contact || !reel || !category || !description) {
+    if (!brandName || !contact || !category || !description) {
       alert('कृपया सभी मुख्य फ़ील्ड भरें।');
       return;
     }
+
+    // Validate Instagram or Video
+    if (uploadType === 'video' && !reel) {
+      alert('कृपया एक वीडियो अपलोड करें।');
+      return;
+    }
+
+    if (uploadType === 'instagram' && !instagramLink) {
+      alert('कृपया Instagram link दर्ज करें।');
+      return;
+    }
+
+    if (uploadType === 'instagram' && !isValidInstagramInput(instagramLink)) {
+      setInstagramError(getInstagramErrorMessage(instagramLink));
+      return;
+    }
+
     if (outfits.some(o => !o.name || !o.mainPrice || !o.price || !o.sizes || !o.colors || o.images.length === 0 || !o.deliveryDays)) {
       alert('कृपया प्रत्येक ऑउटफिट के लिए सभी विवरण, डिलीवरी के दिन और इमेज अपलोड करें।');
       return;
@@ -98,24 +122,34 @@ const UploadPage = () => {
     try {
       const sellerId = auth.currentUser.uid;
 
-      // 1. Upload Reel (Video) - Using Resumable for progress
-      const reelRef = ref(storage, `reels/${Date.now()}_${reel.name}`);
-      const reelUploadTask = uploadBytesResumable(reelRef, reel);
+      let reelUrl = null;
+      let instagramEmbedConfig = null;
 
-      await new Promise((resolve, reject) => {
-        reelUploadTask.on(
-          'state_changed',
-          snapshot => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100 * 0.2; // Reel is 20% of total progress
-            setUploadProgress(progress);
-          },
-          error => reject(error),
-          () => resolve()
-        );
-      });
+      // Handle video upload
+      if (uploadType === 'video') {
+        // 1. Upload Reel (Video) - Using Resumable for progress
+        const reelRef = ref(storage, `reels/${Date.now()}_${reel.name}`);
+        const reelUploadTask = uploadBytesResumable(reelRef, reel);
 
-      const reelUrl = await getDownloadURL(reelRef);
-      setUploadProgress(20); // Set reel upload as complete (20% done)
+        await new Promise((resolve, reject) => {
+          reelUploadTask.on(
+            'state_changed',
+            snapshot => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100 * 0.2; // Reel is 20% of total progress
+              setUploadProgress(progress);
+            },
+            error => reject(error),
+            () => resolve()
+          );
+        });
+
+        reelUrl = await getDownloadURL(reelRef);
+        setUploadProgress(20); // Set reel upload as complete (20% done)
+      } else {
+        // Handle Instagram link
+        instagramEmbedConfig = createInstagramEmbedConfig(instagramLink);
+        setUploadProgress(20);
+      }
 
 
       // 2. Upload Outfit Images
@@ -173,7 +207,9 @@ const UploadPage = () => {
         contact,
         category,
         description,
-        reelUrl,
+        reelUrl: reelUrl || null,
+        instagramEmbedConfig: instagramEmbedConfig || null,
+        uploadType: uploadType, // 'video' or 'instagram'
         outfits: outfitsData,
         createdAt: new Date(),
         likes: 0
@@ -226,12 +262,51 @@ const UploadPage = () => {
             </Select>
           </FormControl>
 
-          <Box sx={{ my: 2 }}>
-            <Button variant="outlined" component="label" fullWidth sx={{ mb: 1 }}>
-              Upload Reel (Video) - {reel ? reel.name : 'No file selected'}
-              <input type="file" accept="video/*" hidden onChange={(e) => setReel(e.target.files[0])} />
-            </Button>
+          {/* Upload Type Tabs */}
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mt: 3, mb: 2 }}>
+            <Tabs value={uploadType} onChange={(e, newValue) => { setUploadType(newValue); setInstagramError(''); }}>
+              <Tab label="Video Upload" value="video" />
+              <Tab label="Instagram Reel" value="instagram" />
+            </Tabs>
           </Box>
+
+          {/* Video Upload Section */}
+          {uploadType === 'video' && (
+            <Box sx={{ my: 2 }}>
+              <Button variant="outlined" component="label" fullWidth sx={{ mb: 1 }}>
+                Upload Reel (Video) - {reel ? reel.name : 'No file selected'}
+                <input type="file" accept="video/*" hidden onChange={(e) => setReel(e.target.files[0])} />
+              </Button>
+            </Box>
+          )}
+
+          {/* Instagram Link Section */}
+          {uploadType === 'instagram' && (
+            <Box sx={{ my: 2 }}>
+              <TextField
+                label="Instagram Link / Shortcode"
+                fullWidth
+                margin="normal"
+                placeholder="https://www.instagram.com/p/ABC123/ या ABC123"
+                value={instagramLink}
+                onChange={(e) => {
+                  setInstagramLink(e.target.value);
+                  setInstagramError('');
+                }}
+                helperText="Instagram post का URL या shortcode दर्ज करें"
+              />
+              {instagramError && (
+                <Alert severity="error" sx={{ mt: 1 }}>
+                  {instagramError}
+                </Alert>
+              )}
+              {instagramLink && isValidInstagramInput(instagramLink) && (
+                <Alert severity="success" sx={{ mt: 1 }}>
+                  ✓ Instagram link मान्य है!
+                </Alert>
+              )}
+            </Box>
+          )}
 
           <Typography variant="h6" sx={{ mt: 3 }}>Outfits</Typography>
 
